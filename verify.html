@@ -7,6 +7,11 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <style>
+    .text-brandBlue { color: #0000CD; }
+    .bg-brandBlue { background-color: #0000CD; }
+    button:hover { background-color: #0000AA; }
+  </style>
 </head>
 <body class="min-h-screen flex items-center justify-center bg-gray-50">
 
@@ -16,7 +21,7 @@
       A verification email has been sent to your email address. <br>
       Please check your inbox (and spam folder) and click the verification link to activate your account.
     </p>
-    <button id="resendBtn" class="px-6 py-3 bg-brandBlue text-white rounded-lg font-semibold hover:bg-blue-700 transition">
+    <button id="resendBtn" class="px-6 py-3 bg-brandBlue text-white rounded-lg font-semibold transition">
       Resend Verification Email
     </button>
     <p class="mt-4 text-gray-500 text-sm">
@@ -41,40 +46,37 @@
     const statusMessage = document.getElementById('statusMessage');
     const resendBtn = document.getElementById('resendBtn');
 
-    // Get current user and send verification if logged in
+    // Firebase throttling: avoid auto sending too many requests
+    let canSend = true;
+
+    // Get current user
     auth.onAuthStateChanged(user => {
-      if (user && !user.emailVerified) {
-        // Optionally resend automatically
-        user.sendEmailVerification()
-          .then(() => {
-            statusMessage.textContent = "Verification email sent. Check your inbox!";
-            statusMessage.className = "text-green-600 mt-3";
-          })
-          .catch(err => {
-            statusMessage.textContent = err.message;
-            statusMessage.className = "text-red-600 mt-3";
-          });
-      } else if (user && user.emailVerified) {
-        // Already verified, redirect to dashboard
-        window.location.href = "dashboard.html";
-      } else {
-        // No user logged in, redirect to login
+      if (!user) {
         window.location.href = "login.html";
       }
     });
 
     // Resend button
     resendBtn.addEventListener('click', () => {
+      if (!canSend) {
+        statusMessage.textContent = "Please wait before resending again.";
+        statusMessage.className = "text-red-600 mt-3";
+        return;
+      }
+
       const user = auth.currentUser;
-      if (user) {
+      if (user && !user.emailVerified) {
+        canSend = false;
         user.sendEmailVerification()
           .then(() => {
             statusMessage.textContent = "Verification email resent!";
             statusMessage.className = "text-green-600 mt-3";
+            setTimeout(() => canSend = true, 60000); // 1-minute cooldown
           })
           .catch(err => {
             statusMessage.textContent = err.message;
             statusMessage.className = "text-red-600 mt-3";
+            canSend = true;
           });
       }
     });
