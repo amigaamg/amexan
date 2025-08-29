@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Email Verification - Amexan</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+</head>
+<body class="min-h-screen flex items-center justify-center bg-gray-50">
+
+  <div class="bg-white p-8 rounded-xl shadow-xl text-center max-w-md">
+    <h1 class="text-2xl font-bold mb-4 text-brandBlue">Verify Your Email</h1>
+    <p class="mb-6 text-gray-700">
+      A verification email has been sent to your email address. <br>
+      Please check your inbox (and spam folder) and click the verification link to activate your account.
+    </p>
+    <button id="resendBtn" class="px-6 py-3 bg-brandBlue text-white rounded-lg font-semibold hover:bg-blue-700 transition">
+      Resend Verification Email
+    </button>
+    <p class="mt-4 text-gray-500 text-sm">
+      After verification, <a href="login.html" class="text-brandBlue hover:underline">click here to login</a>.
+    </p>
+    <p id="statusMessage" class="mt-3 text-sm"></p>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCet4LIMVEHc8w1hrHhrFvg-Zw-9H7TN-k",
+      authDomain: "bynexproject.firebaseapp.com",
+      projectId: "bynexproject",
+      storageBucket: "bynexproject.appspot.com",
+      messagingSenderId: "667246369908",
+      appId: "1:667246369908:web:1cbbbe51da7673246c8521",
+      measurementId: "G-7CCRBG0P8D"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const statusMessage = document.getElementById('statusMessage');
+    const resendBtn = document.getElementById('resendBtn');
+
+    // Get current user and send verification if logged in
+    auth.onAuthStateChanged(user => {
+      if (user && !user.emailVerified) {
+        // Optionally resend automatically
+        user.sendEmailVerification()
+          .then(() => {
+            statusMessage.textContent = "Verification email sent. Check your inbox!";
+            statusMessage.className = "text-green-600 mt-3";
+          })
+          .catch(err => {
+            statusMessage.textContent = err.message;
+            statusMessage.className = "text-red-600 mt-3";
+          });
+      } else if (user && user.emailVerified) {
+        // Already verified, redirect to dashboard
+        window.location.href = "dashboard.html";
+      } else {
+        // No user logged in, redirect to login
+        window.location.href = "login.html";
+      }
+    });
+
+    // Resend button
+    resendBtn.addEventListener('click', () => {
+      const user = auth.currentUser;
+      if (user) {
+        user.sendEmailVerification()
+          .then(() => {
+            statusMessage.textContent = "Verification email resent!";
+            statusMessage.className = "text-green-600 mt-3";
+          })
+          .catch(err => {
+            statusMessage.textContent = err.message;
+            statusMessage.className = "text-red-600 mt-3";
+          });
+      }
+    });
+  </script>
+
+</body>
+</html>
